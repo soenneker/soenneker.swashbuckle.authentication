@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFrameworks>net7.0</TargetFrameworks>
+        <Nullable>enable</Nullable>
+        <Platforms>AnyCPU</Platforms>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <Description>A middleware implementing basic authentication and RBAC support for Swashbuckle (Swagger)</Description>
+        <Version Condition="'$(BUILD_VERSION)' == ''">1.0.0</Version>
+        <Version Condition="'$(BUILD_VERSION)' != ''">$(BUILD_VERSION)</Version>
+        <AssemblyName>Soenneker.Swashbuckle.Authentication</AssemblyName>
+        <PackageId>Soenneker.Swashbuckle.Authentication</PackageId>
+        <PackageTags>swashbuckle swagger authentication rbac c# .net dotnet</PackageTags>
+        <Copyright>Copyright © 2023 Jake Soenneker</Copyright>
+        <Authors>Jake Soenneker</Authors>
+        <Company>https://soenneker.com</Company>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <IsPackable>true</IsPackable>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/soenneker/soenneker.swashbuckle.authentication</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/soenneker/soenneker.swashbuckle.authentication</RepositoryUrl>
+        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <LangVersion>latest</LangVersion>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageIcon>icon.png</PackageIcon>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
+        <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+        <None Include="..\icon.png" Pack="true" PackagePath="\" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="7.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+
+        <PackageReference Include="Soenneker.Extensions.Dictionary" Version="1.0.7" />
+
+        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="1.0.5" />
+
+        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="1.0.4" />
+
+        <PackageReference Include="Soenneker.Extensions.String" Version="1.0.10" />
+    </ItemGroup>
+</Project>
