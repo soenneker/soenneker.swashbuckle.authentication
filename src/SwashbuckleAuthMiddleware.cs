@@ -75,7 +75,7 @@ public class SwashbuckleAuthMiddleware
             _uri = configuredUri;
         }
 
-        var accessKeys = config.GetValue<List<string>>("Swagger:AccessKeys");
+        var accessKeys = config.GetSection("Swagger:AccessKeys").Get<List<string>>();
 
         if (accessKeys.Populated())
         {
