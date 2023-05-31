@@ -41,12 +41,12 @@
 
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 
-        <PackageReference Include="Soenneker.Extensions.Dictionary" Version="1.0.36" />
+        <PackageReference Include="Soenneker.Extensions.Dictionary" Version="1.0.39" />
 
         <PackageReference Include="Soenneker.Extensions.Enumerable" Version="1.0.21" />
 
-        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="1.0.14" />
+        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="1.0.16" />
 
-        <PackageReference Include="Soenneker.Extensions.String" Version="1.0.58" />
+        <PackageReference Include="Soenneker.Extensions.String" Version="1.0.61" />
     </ItemGroup>
 </Project>
