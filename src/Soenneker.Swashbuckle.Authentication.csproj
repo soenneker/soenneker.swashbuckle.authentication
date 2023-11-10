@@ -40,11 +40,11 @@
 
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
 
-        <PackageReference Include="Soenneker.Extensions.Configuration" Version="1.0.116" />
+        <PackageReference Include="Soenneker.Extensions.Configuration" Version="1.0.118" />
 
         <PackageReference Include="Soenneker.Extensions.Dictionary" Version="1.0.97" />
 
-        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="1.0.45" />
+        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="1.0.47" />
 
         <PackageReference Include="Soenneker.Extensions.HttpContext" Version="1.0.77" />
     </ItemGroup>
