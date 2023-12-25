@@ -8,5 +8,5 @@
 ## Installation
 
 ```
-Install-Package Soenneker.Swashbuckle.Authentication
+dotnet add package Soenneker.Swashbuckle.Authentication
 ```
