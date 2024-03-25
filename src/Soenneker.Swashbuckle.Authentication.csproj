@@ -42,7 +42,7 @@
 
         <PackageReference Include="Soenneker.Extensions.Configuration" Version="2.1.240" />
 
-        <PackageReference Include="Soenneker.Extensions.Dictionary" Version="2.1.173" />
+        <PackageReference Include="Soenneker.Extensions.Dictionary" Version="2.1.174" />
 
         <PackageReference Include="Soenneker.Extensions.Enumerable" Version="2.1.47" />
 
