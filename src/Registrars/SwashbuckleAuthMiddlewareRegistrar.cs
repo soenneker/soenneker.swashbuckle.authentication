@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 
-namespace Soenneker.Swashbuckle.Authentication.Extensions;
+namespace Soenneker.Swashbuckle.Authentication.Registrars;
 
 public static class SwaggerAuthorizeExtensions
 {

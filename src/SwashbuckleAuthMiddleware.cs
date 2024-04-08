@@ -7,10 +7,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
+using Soenneker.Extensions.Configuration;
 using Soenneker.Extensions.Dictionary;
 using Soenneker.Extensions.Enumerable;
 using Soenneker.Extensions.HttpContext;
 using Soenneker.Extensions.String;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 
 namespace Soenneker.Swashbuckle.Authentication;
 
@@ -53,15 +56,8 @@ public class SwashbuckleAuthMiddleware
 
     private void SetupConfig(IConfiguration config)
     {
-        _username = config.GetValue<string>("Swagger:Username");
-
-        if (_username.IsNullOrEmpty())
-            throw new Exception("Swagger:Username must be set in configuration");
-
-        _password = config.GetValue<string>("Swagger:Password");
-
-        if (_password.IsNullOrEmpty())
-            throw new Exception("Swagger:Password must be set in configuration");
+        _username = config.GetValueStrict<string>("Swagger:Username");
+        _password = config.GetValueStrict<string>("Swagger:Password");
 
         var configuredUri = config.GetValue<string>("Swagger:Uri");
 
@@ -79,7 +75,7 @@ public class SwashbuckleAuthMiddleware
 
         if (accessKeys.Populated())
         {
-            _accessKeyRoles = new Dictionary<string, string>();
+            _accessKeyRoles = [];
 
             foreach (string accessKey in accessKeys)
             {
@@ -104,17 +100,17 @@ public class SwashbuckleAuthMiddleware
         if (!context.Request.Path.StartsWithSegments(_uri))
         {
             // Any other request
-            await _next.Invoke(context);
+            await _next.Invoke(context).NoSync();
             return;
         }
 
-        if (await CheckAccessKeys(context))
+        if (await CheckAccessKeys(context).NoSync())
             return;
 
-        if (await CheckLocalBypass(context))
+        if (await CheckLocalBypass(context).NoSync())
             return;
 
-        if (await CheckCredentials(context))
+        if (await CheckCredentials(context).NoSync())
             return;
 
         SetUnauthorized(context, false);
@@ -129,7 +125,7 @@ public class SwashbuckleAuthMiddleware
             return false;
 
         _logger.LogDebug("Allowed Swagger access because we're local");
-        await _next.Invoke(context);
+        await _next.Invoke(context).NoSync();
         return true;
     }
 
@@ -166,7 +162,7 @@ public class SwashbuckleAuthMiddleware
             {
                 SetIdentity(context, authHeader, "admin");
 
-                await _next.Invoke(context);
+                await _next.Invoke(context).NoSync();
                 return true;
             }
         }
@@ -207,7 +203,7 @@ public class SwashbuckleAuthMiddleware
                 {
                     SetIdentity(context, "", role);
 
-                    await _next.Invoke(context);
+                    await _next.Invoke(context).NoSync();
                     return true;
                 }
             }
@@ -217,7 +213,7 @@ public class SwashbuckleAuthMiddleware
                 {
                     SetIdentity(context, "", role);
 
-                    await _next.Invoke(context);
+                    await _next.Invoke(context).NoSync();
                     return true;
                 }
             }
@@ -241,7 +237,7 @@ public class SwashbuckleAuthMiddleware
     private void SetIdentity(HttpContext context, string authHeader, string role)
     {
         var identity = new GenericIdentity(authHeader);
-        var newPrincipal = new GenericPrincipal(identity, new[] {role});
+        var newPrincipal = new GenericPrincipal(identity, [role]);
         context.User = newPrincipal;
 
         if (role == "admin")
