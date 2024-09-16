@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\src\Soenneker.Swashbuckle.Authentication.csproj" />
+      <ProjectReference Include="..\..\src\Soenneker.Swashbuckle.Authentication.csproj" />
     </ItemGroup>
 
 </Project>
