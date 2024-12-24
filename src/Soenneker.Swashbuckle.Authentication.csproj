@@ -46,7 +46,7 @@
 
         <PackageReference Include="Soenneker.Extensions.Enumerable" Version="3.0.287" />
 
-        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="3.0.437" />
+        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="3.0.438" />
 
         <PackageReference Include="Soenneker.Extensions.Task" Version="3.0.80" />
 
