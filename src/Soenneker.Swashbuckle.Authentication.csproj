@@ -40,14 +40,14 @@
 
         
 
-        <PackageReference Include="Soenneker.Extensions.Configuration" Version="3.0.582" />
+        <PackageReference Include="Soenneker.Extensions.Configuration" Version="3.0.583" />
 
-        <PackageReference Include="Soenneker.Extensions.Dictionary" Version="3.0.441" />
+        <PackageReference Include="Soenneker.Extensions.Dictionary" Version="3.0.443" />
 
-        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="3.0.301" />
+        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="3.0.303" />
 
-        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="3.0.445" />
+        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="3.0.446" />
 
-        <PackageReference Include="Soenneker.Extensions.ValueTask" Version="3.0.71" />
+        <PackageReference Include="Soenneker.Extensions.ValueTask" Version="3.0.72" />
     </ItemGroup>
 </Project>
