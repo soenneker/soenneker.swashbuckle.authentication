@@ -40,13 +40,13 @@
 
         
 
-        <PackageReference Include="Soenneker.Extensions.Configuration" Version="3.0.579" />
+        <PackageReference Include="Soenneker.Extensions.Configuration" Version="3.0.580" />
 
         <PackageReference Include="Soenneker.Extensions.Dictionary" Version="3.0.437" />
 
         <PackageReference Include="Soenneker.Extensions.Enumerable" Version="3.0.294" />
 
-        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="3.0.440" />
+        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="3.0.441" />
 
         <PackageReference Include="Soenneker.Extensions.ValueTask" Version="3.0.70" />
     </ItemGroup>
