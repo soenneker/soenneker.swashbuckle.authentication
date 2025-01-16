@@ -137,7 +137,7 @@ public class SwashbuckleAuthMiddleware
 
         if (!authHeader.IsNullOrEmpty() && authHeader.StartsWith("Basic "))
         {
-            string encodedUsernamePassword = authHeader.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
+            string encodedUsernamePassword = authHeader.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries)[1].TrimFast();
 
             if (encodedUsernamePassword.IsNullOrEmpty())
             {
