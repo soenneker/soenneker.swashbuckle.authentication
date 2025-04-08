@@ -44,7 +44,7 @@
 
         <PackageReference Include="Soenneker.Extensions.Dictionary" Version="3.0.591" />
 
-        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="3.0.527" />
+        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="3.0.536" />
 
         <PackageReference Include="Soenneker.Extensions.HttpContext" Version="3.0.588" />
 
