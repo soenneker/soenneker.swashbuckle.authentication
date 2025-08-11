@@ -1,56 +1,48 @@
-using System;
-using System.Collections.Generic;
-using System.Security.Principal;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 using Soenneker.Extensions.Configuration;
-using Soenneker.Extensions.Dictionary;
 using Soenneker.Extensions.Enumerable;
 using Soenneker.Extensions.HttpContext;
 using Soenneker.Extensions.String;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
+using System;
+using System.Collections.Generic;
+using System.Security.Principal;
+using System.Threading.Tasks;
 
 namespace Soenneker.Swashbuckle.Authentication;
 
 /// <summary>
 /// A middleware implementing basic authentication and RBAC support for Swashbuckle (Swagger)
 /// </summary>
-/// <remarks>
-/// The following configuration entries are required:
-/// Swagger:LocalAuthenticationBypassEnabled <para/>
-/// Swagger:Username (Admin)<para/>
-/// Swagger:Password (Admin)<para/>
-///
-/// Optional:
-/// Swagger:Uri <para/>
-/// Swagger:AccessKeys <para/>
-/// "role:key"
-/// </remarks>
-public class SwashbuckleAuthMiddleware
+public sealed class SwashbuckleAuthMiddleware
 {
+    private const StringComparison _ord = StringComparison.Ordinal;
+    private const StringComparison _ordIgnore = StringComparison.OrdinalIgnoreCase;
+    private const string _basicPrefix = "Basic ";
+
     private readonly RequestDelegate _next;
-
     private readonly ILogger<SwashbuckleAuthMiddleware> _logger;
-    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    private string? _uri;
+    private PathString _uriPath; // store as PathString to avoid conversions
     private bool _localAuthenticationBypassEnabled;
-    private string? _username;
-    private string? _password;
+    private string _username = null!;
+    private string _password = null!;
 
-    private Dictionary<string, string>? _accessKeyRoles;
+    // access-key -> role
+    private Dictionary<string, string>? _accessKeyToRole;
 
-    public SwashbuckleAuthMiddleware(RequestDelegate next, IConfiguration config, IHttpContextAccessor httpContextAccessor, ILogger<SwashbuckleAuthMiddleware> logger)
+    // role -> access-key (for cookie write) - avoids O(n) reverse lookup
+    private Dictionary<string, string>? _roleToAccessKey;
+
+    public SwashbuckleAuthMiddleware(RequestDelegate next, IConfiguration config, ILogger<SwashbuckleAuthMiddleware> logger)
     {
         _next = next;
         _logger = logger;
-        _httpContextAccessor = httpContextAccessor;
-
         SetupConfig(config);
     }
 
@@ -60,111 +52,117 @@ public class SwashbuckleAuthMiddleware
         _password = config.GetValueStrict<string>("Swagger:Password");
 
         var configuredUri = config.GetValue<string>("Swagger:Uri");
-
         if (configuredUri.IsNullOrEmpty())
         {
             _logger.LogDebug("A swagger uri was not set explicitly, so choosing default '/swagger'");
-            _uri = "/swagger";
+            _uriPath = new PathString("/swagger");
         }
         else
         {
-            _uri = configuredUri;
+            _uriPath = new PathString(configuredUri!);
         }
 
         var accessKeys = config.GetSection("Swagger:AccessKeys").Get<List<string>>();
-
         if (accessKeys.Populated())
         {
-            _accessKeyRoles = [];
+            _accessKeyToRole = new Dictionary<string, string>(accessKeys.Count, StringComparer.Ordinal);
+            _roleToAccessKey = new Dictionary<string, string>(accessKeys.Count, StringComparer.Ordinal);
 
             foreach (string accessKey in accessKeys)
             {
-                // Expects e.g. "user:key"
-                string[] split = accessKey.Split(':');
+                // Expect "role:key"
+                int idx = accessKey.IndexOf(':');
+                if (idx <= 0 || idx == accessKey.Length - 1)
+                    throw new Exception("Badly formed Swagger access key. Needs to be in format 'role:accessKey'");
 
-                if (split.Length != 2) // TODO: More validation here
-                    throw new Exception("Badly formed Swagger access key. Needs to be in format 'user:accessKey'");
+                string role = accessKey.Substring(0, idx);
+                string key = accessKey.Substring(idx + 1);
 
-                // stores via key because that's the lookup
-                _accessKeyRoles.Add(split[1], split[0]);
+                // store both directions
+                _accessKeyToRole[key] = role;
+                _roleToAccessKey[role] = key;
             }
         }
 
-        var localBypassEnabled = config.GetValue<bool>("Swagger:LocalAuthenticationBypassEnabled");
-
-        _localAuthenticationBypassEnabled = localBypassEnabled;
+        _localAuthenticationBypassEnabled = config.GetValue<bool>("Swagger:LocalAuthenticationBypassEnabled");
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!context.Request.Path.StartsWithSegments(_uri))
+        // Fast path: if not swagger, delegate immediately
+        if (!context.Request.Path.StartsWithSegments(_uriPath))
         {
-            // Any other request
-            await _next.Invoke(context).NoSync();
+            await _next(context).NoSync();
             return;
         }
 
-        if (await CheckAccessKeys(context).NoSync())
-            return;
+        if (await CheckAccessKeys(context).NoSync()) return;
+        if (await CheckLocalBypass(context).NoSync()) return;
+        if (await CheckCredentials(context).NoSync()) return;
 
-        if (await CheckLocalBypass(context).NoSync())
-            return;
-
-        if (await CheckCredentials(context).NoSync())
-            return;
-
-        SetUnauthorized(context, false);
+        SetUnauthorized(context, badAttempt: false);
     }
 
     private async ValueTask<bool> CheckLocalBypass(HttpContext context)
     {
-        if (!_localAuthenticationBypassEnabled)
+        if (!_localAuthenticationBypassEnabled || !context.IsLocalRequest())
             return false;
 
-        if (!context.IsLocalRequest())
-            return false;
+        if (_logger.IsEnabled(LogLevel.Debug))
+            _logger.LogDebug("Allowed Swagger access because we're local");
 
-        _logger.LogDebug("Allowed Swagger access because we're local");
-        await _next.Invoke(context).NoSync();
+        await _next(context).NoSync();
         return true;
     }
 
     private async ValueTask<bool> CheckCredentials(HttpContext context)
     {
-        context.Request.Headers.TryGetValue(HeaderNames.Authorization, out StringValues authHeaderValue);
+        if (!context.Request.Headers.TryGetValue(HeaderNames.Authorization, out StringValues authValues))
+            return false;
 
-        string authHeader = authHeaderValue.ToString();
+        // Use the first value (avoids ToString allocation)
+        string? authHeader = authValues.Count > 0 ? authValues[0] : null;
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith(_basicPrefix, _ord))
+            return false;
 
-        if (!authHeader.IsNullOrEmpty() && authHeader.StartsWith("Basic "))
+        // Extract base64 payload without allocations where possible
+        ReadOnlySpan<char> base64 = authHeader.AsSpan(_basicPrefix.Length).Trim();
+
+        if (base64.IsEmpty)
         {
-            string encodedUsernamePassword = authHeader.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
+            SetUnauthorized(context, badAttempt: true);
+            return true;
+        }
 
-            if (encodedUsernamePassword.IsNullOrEmpty())
-            {
-                SetUnauthorized(context, true);
-                return true;
-            }
+        // Base64 decode with stackalloc to avoid intermediate string allocation
+        // Max decoded length = (base64Len * 3) / 4
+        int maxLen = (base64.Length * 3) / 4;
+        Span<byte> bytes = maxLen <= 1024 ? stackalloc byte[maxLen] : new byte[maxLen];
 
-            string decodedUsernamePassword = encodedUsernamePassword.ToStringFromEncoded64();
+        if (!Convert.TryFromBase64Chars(base64, bytes, out int written))
+        {
+            SetUnauthorized(context, badAttempt: true);
+            return true;
+        }
 
-            string[] credentialArray = decodedUsernamePassword.Split(':', 2);
+        string decoded = System.Text.Encoding.UTF8.GetString(bytes.Slice(0, written)); // small, unavoidable
 
-            if (credentialArray.Length != 2)
-            {
-                SetUnauthorized(context, true);
-                return true;
-            }
+        // Parse "username:password" without Split allocation
+        int sep = decoded.IndexOf(':');
+        if (sep <= 0 || sep == decoded.Length - 1)
+        {
+            SetUnauthorized(context, badAttempt: true);
+            return true;
+        }
 
-            string username = credentialArray[0];
-            string password = credentialArray[1];
+        ReadOnlySpan<char> username = decoded.AsSpan(0, sep);
+        ReadOnlySpan<char> password = decoded.AsSpan(sep + 1);
 
-            if (username.Equals(_username, StringComparison.OrdinalIgnoreCase) && password == _password)
-            {
-                SetIdentity(context, authHeader, "admin");
-
-                await _next.Invoke(context).NoSync();
-                return true;
-            }
+        if (username.Equals(_username, _ordIgnore) && password.SequenceEqual(_password.AsSpan()))
+        {
+            SetIdentity(context, userNameForIdentity: _username, role: "admin");
+            await _next(context).NoSync();
+            return true;
         }
 
         return false;
@@ -172,83 +170,66 @@ public class SwashbuckleAuthMiddleware
 
     private async ValueTask<bool> CheckAccessKeys(HttpContext context)
     {
+        if (_accessKeyToRole is null)
+            return false;
+
+        // Prefer explicit query accesskey, else fallback to cookie
         string? accessKey = null;
 
-        if (context.Request.Query.TryGetValue("accesskey", out StringValues stringValueAccessKey))
-            accessKey = stringValueAccessKey.ToString();
+        if (context.Request.Query.TryGetValue("accesskey", out StringValues qv) && qv.Count > 0)
+            accessKey = qv[0];
 
-        string? cookieAccessKey = null;
+        // On landing page without ?accesskey, clear any old cookie
+        PathString path = context.Request.Path; // PathString, no ToString alloc
+        bool onIndex = path.Equals(_uriPath, StringComparison.Ordinal) || path.Equals(_uriPath.Add("/index.html"), StringComparison.Ordinal);
 
-        var path = context.Request.Path.ToString();
-
-        if (path == _uri || path == $"{_uri}/index.html")
+        if (onIndex && string.IsNullOrEmpty(accessKey))
         {
-            if (accessKey.IsNullOrEmpty())
-                _httpContextAccessor.HttpContext!.Response.Cookies.Delete("swagger-access-key");
-            else
-                _httpContextAccessor.HttpContext!.Request.Cookies.TryGetValue("swagger-access-key", out cookieAccessKey);
-        }
-        else
-        {
-            _httpContextAccessor.HttpContext!.Request.Cookies.TryGetValue("swagger-access-key", out cookieAccessKey);
+            context.Response.Cookies.Delete("swagger-access-key");
         }
 
-        if (_accessKeyRoles.Populated())
+        if (accessKey is null)
         {
-            string? role;
+            context.Request.Cookies.TryGetValue("swagger-access-key", out accessKey);
+        }
 
-            if (accessKey != null)
-            {
-                if (_accessKeyRoles.TryGetValue(accessKey, out role))
-                {
-                    SetIdentity(context, "", role);
-
-                    await _next.Invoke(context).NoSync();
-                    return true;
-                }
-            }
-            else if (cookieAccessKey != null)
-            {
-                if (_accessKeyRoles.TryGetValue(cookieAccessKey, out role))
-                {
-                    SetIdentity(context, "", role);
-
-                    await _next.Invoke(context).NoSync();
-                    return true;
-                }
-            }
+        if (accessKey is not null && _accessKeyToRole.TryGetValue(accessKey, out string? role))
+        {
+            SetIdentity(context, userNameForIdentity: "accesskey", role: role);
+            await _next(context).NoSync();
+            return true;
         }
 
         return false;
     }
 
-    public void SetUnauthorized(HttpContext context, bool badAttempt)
+    private void SetUnauthorized(HttpContext context, bool badAttempt)
     {
-        if (badAttempt)
+        if (badAttempt && _logger.IsEnabled(LogLevel.Debug))
             _logger.LogDebug("Unauthorized attempt at Swagger from ip {ip}", context.Connection.RemoteIpAddress);
 
-        // Return authentication type (causes browser to show login dialog)
+        // Signal Basic challenge; no need to set Authorization on the response
         context.Response.Headers[HeaderNames.WWWAuthenticate] = "Basic";
-        context.Response.Headers[HeaderNames.Authorization] = new StringValues("");
-
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
     }
 
-    private void SetIdentity(HttpContext context, string authHeader, string role)
+    private void SetIdentity(HttpContext context, string userNameForIdentity, string role)
     {
-        var identity = new GenericIdentity(authHeader);
-        var newPrincipal = new GenericPrincipal(identity, [role]);
-        context.User = newPrincipal;
+        // Keep identity light; don't store the full auth header as name
+        var identity = new GenericIdentity(userNameForIdentity);
+        context.User = new GenericPrincipal(identity, new[] {role});
 
         if (role == "admin")
             return;
 
-        if (_accessKeyRoles == null)
+        if (_roleToAccessKey is null)
             return;
 
-        if (_accessKeyRoles.TryGetKeyFromValue(role, out string? keyFromRole))
+        // Write the role's access key as a cookie for subsequent visits
+        if (_roleToAccessKey.TryGetValue(role, out string? keyFromRole))
         {
-            _httpContextAccessor.HttpContext!.Response.Cookies.Append("swagger-access-key", keyFromRole);
+            // You can add options (HttpOnly/SameSite/Secure) here as needed
+            context.Response.Cookies.Append("swagger-access-key", keyFromRole);
         }
     }
 }
