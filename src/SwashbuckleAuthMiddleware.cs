@@ -62,7 +62,8 @@ public sealed class SwashbuckleAuthMiddleware
             _uriPath = new PathString(configuredUri!);
         }
 
-        var accessKeys = config.GetSection("Swagger:AccessKeys").Get<List<string>>();
+        var accessKeys = config.GetSection("Swagger:AccessKeys")
+                               .Get<List<string>>();
         if (accessKeys.Populated())
         {
             _accessKeyToRole = new Dictionary<string, string>(accessKeys.Count, StringComparer.Ordinal);
@@ -92,13 +93,20 @@ public sealed class SwashbuckleAuthMiddleware
         // Fast path: if not swagger, delegate immediately
         if (!context.Request.Path.StartsWithSegments(_uriPath))
         {
-            await _next(context).NoSync();
+            await _next(context)
+                .NoSync();
             return;
         }
 
-        if (await CheckAccessKeys(context).NoSync()) return;
-        if (await CheckLocalBypass(context).NoSync()) return;
-        if (await CheckCredentials(context).NoSync()) return;
+        if (await CheckAccessKeys(context)
+                .NoSync())
+            return;
+        if (await CheckLocalBypass(context)
+                .NoSync())
+            return;
+        if (await CheckCredentials(context)
+                .NoSync())
+            return;
 
         SetUnauthorized(context, badAttempt: false);
     }
@@ -111,7 +119,8 @@ public sealed class SwashbuckleAuthMiddleware
         if (_logger.IsEnabled(LogLevel.Debug))
             _logger.LogDebug("Allowed Swagger access because we're local");
 
-        await _next(context).NoSync();
+        await _next(context)
+            .NoSync();
         return true;
     }
 
@@ -126,7 +135,8 @@ public sealed class SwashbuckleAuthMiddleware
             return false;
 
         // Extract base64 payload without allocations where possible
-        ReadOnlySpan<char> base64 = authHeader.AsSpan(_basicPrefix.Length).Trim();
+        ReadOnlySpan<char> base64 = authHeader.AsSpan(_basicPrefix.Length)
+                                              .Trim();
 
         if (base64.IsEmpty)
         {
@@ -161,7 +171,8 @@ public sealed class SwashbuckleAuthMiddleware
         if (username.Equals(_username, _ordIgnore) && password.SequenceEqual(_password.AsSpan()))
         {
             SetIdentity(context, userNameForIdentity: _username, role: "admin");
-            await _next(context).NoSync();
+            await _next(context)
+                .NoSync();
             return true;
         }
 
@@ -196,7 +207,8 @@ public sealed class SwashbuckleAuthMiddleware
         if (accessKey is not null && _accessKeyToRole.TryGetValue(accessKey, out string? role))
         {
             SetIdentity(context, userNameForIdentity: "accesskey", role: role);
-            await _next(context).NoSync();
+            await _next(context)
+                .NoSync();
             return true;
         }
 
@@ -217,7 +229,7 @@ public sealed class SwashbuckleAuthMiddleware
     {
         // Keep identity light; don't store the full auth header as name
         var identity = new GenericIdentity(userNameForIdentity);
-        context.User = new GenericPrincipal(identity, new[] {role});
+        context.User = new GenericPrincipal(identity, [role]);
 
         if (role == "admin")
             return;
