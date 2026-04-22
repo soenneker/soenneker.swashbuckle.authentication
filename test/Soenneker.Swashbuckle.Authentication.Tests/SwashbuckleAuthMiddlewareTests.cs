@@ -1,16 +1,15 @@
-using Soenneker.Tests.FixturedUnit;
-using Xunit;
+using Soenneker.Tests.HostedUnit;
 
 namespace Soenneker.Swashbuckle.Authentication.Tests;
 
-[Collection("Collection")]
-public class SwashbuckleAuthMiddlewareTests : FixturedUnitTest
+[ClassDataSource<Host>(Shared = SharedType.PerTestSession)]
+public class SwashbuckleAuthMiddlewareTests : HostedUnitTest
 {
-    public SwashbuckleAuthMiddlewareTests(Fixture fixture, ITestOutputHelper output) : base(fixture, output)
+    public SwashbuckleAuthMiddlewareTests(Host host) : base(host)
     {
     }
 
-    [Fact]
+    [Test]
     public void Default()
     {
 
