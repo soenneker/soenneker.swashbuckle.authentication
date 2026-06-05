@@ -88,6 +88,11 @@ public sealed class SwashbuckleAuthMiddleware
         _localAuthenticationBypassEnabled = config.GetValue<bool>("Swagger:LocalAuthenticationBypassEnabled");
     }
 
+    /// <summary>
+    /// Executes the invoke async operation.
+    /// </summary>
+    /// <param name="context">The context.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         // Fast path: if not swagger, delegate immediately
