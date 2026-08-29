@@ -89,10 +89,10 @@ public sealed class SwashbuckleAuthMiddleware
     }
 
     /// <summary>
-    /// Executes the invoke async operation.
+    /// Invokes async.
     /// </summary>
-    /// <param name="context">The context.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <param name="context">HTTP context containing the Authorization header.</param>
+    /// <returns>A task that completes when the invoke async operation is complete.</returns>
     public async Task InvokeAsync(HttpContext context)
     {
         // Fast path: if not swagger, delegate immediately
