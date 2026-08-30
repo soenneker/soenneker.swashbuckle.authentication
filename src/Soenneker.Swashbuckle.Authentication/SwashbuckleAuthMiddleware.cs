@@ -245,8 +245,13 @@ public sealed class SwashbuckleAuthMiddleware
         // Write the role's access key as a cookie for subsequent visits
         if (_roleToAccessKey.TryGetValue(role, out string? keyFromRole))
         {
-            // You can add options (HttpOnly/SameSite/Secure) here as needed
-            context.Response.Cookies.Append("swagger-access-key", keyFromRole);
+            context.Response.Cookies.Append("swagger-access-key", keyFromRole, new CookieOptions
+            {
+                HttpOnly = true,
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                Secure = context.Request.IsHttps,
+                Path = _uriPath.Value
+            });
         }
     }
 }
