@@ -42,9 +42,9 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Extensions.Configuration" Version="4.0.870" />
+        <PackageReference Include="Soenneker.Extensions.Configuration" Version="4.0.871" />
         <PackageReference Include="Soenneker.Extensions.Dictionary" Version="4.0.650" />
         <PackageReference Include="Soenneker.Extensions.Enumerable" Version="4.0.658" />
-        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="4.0.728" />
+        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="4.0.729" />
     </ItemGroup>
 </Project>
