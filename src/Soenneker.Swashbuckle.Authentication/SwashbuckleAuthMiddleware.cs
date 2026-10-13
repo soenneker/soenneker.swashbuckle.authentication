@@ -48,8 +48,8 @@ public sealed class SwashbuckleAuthMiddleware
 
     private void SetupConfig(IConfiguration config)
     {
-        _username = config.GetValueStrict<string>("Swagger:Username");
-        _password = config.GetValueStrict<string>("Swagger:Password");
+        _username = config.GetStringStrict("Swagger:Username");
+        _password = config.GetStringStrict("Swagger:Password");
 
         var configuredUri = config.GetValue<string>("Swagger:Uri");
         if (configuredUri.IsNullOrEmpty())
