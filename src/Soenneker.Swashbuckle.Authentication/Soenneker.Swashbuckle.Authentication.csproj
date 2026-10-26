@@ -3,7 +3,7 @@
         <Using Include="System.Collections.Generic" />
     </ItemGroup>
     <PropertyGroup>
-        <TargetFramework>net10.0</TargetFramework>
+        <TargetFramework>net11.0</TargetFramework>
         <Nullable>enable</Nullable>
         <IsAotCompatible>true</IsAotCompatible>
         <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
@@ -13,7 +13,7 @@
 
     <PropertyGroup>
         <Description>A middleware implementing basic authentication and RBAC support for Swashbuckle (Swagger)</Description>
-        <Version Condition="'$(BUILD_VERSION)' == ''">4.0.0</Version>
+        <Version Condition="'$(BUILD_VERSION)' == ''">11.0.0</Version>
         <Version Condition="'$(BUILD_VERSION)' != ''">$(BUILD_VERSION)</Version>
         <AssemblyName>Soenneker.Swashbuckle.Authentication</AssemblyName>
         <PackageId>Soenneker.Swashbuckle.Authentication</PackageId>
@@ -47,8 +47,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Extensions.Configuration" Version="4.0.911" />
-        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="4.0.688" />
+        <PackageReference Include="Soenneker.Extensions.Configuration" Version="11.0.913" />
+        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="4.0.689" />
         <PackageReference Include="Soenneker.Extensions.HttpContext" Version="4.0.777" />
     </ItemGroup>
 </Project>
