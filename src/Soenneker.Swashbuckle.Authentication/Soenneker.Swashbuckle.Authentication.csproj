@@ -50,6 +50,6 @@
     <ItemGroup>
         <PackageReference Include="Soenneker.Extensions.Configuration" Version="11.0.916" />
         <PackageReference Include="Soenneker.Extensions.Enumerable" Version="11.0.698" />
-        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="11.0.784" />
+        <PackageReference Include="Soenneker.Extensions.HttpContext" Version="11.0.786" />
     </ItemGroup>
 </Project>
