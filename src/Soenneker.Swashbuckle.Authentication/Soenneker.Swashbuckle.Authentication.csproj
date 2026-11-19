@@ -49,7 +49,7 @@
 
     <ItemGroup>
         <PackageReference Include="Soenneker.Extensions.Configuration" Version="11.0.919" />
-        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="11.0.704" />
+        <PackageReference Include="Soenneker.Extensions.Enumerable" Version="11.0.705" />
         <PackageReference Include="Soenneker.Extensions.HttpContext" Version="11.0.794" />
     </ItemGroup>
 </Project>
